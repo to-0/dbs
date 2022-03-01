@@ -20,5 +20,6 @@ import v1.views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('v1/health', v1.views.health)
+    path('v1/health', v1.views.health),
+    path('', v1.views.home)
 ]

@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 
 # Create your views here.
@@ -8,6 +8,9 @@ from django.shortcuts import render
 # load_dotenv()
 # conn = psycopg2.connect(dbname="dota2", user=os.environ["DB_USER"], password=os.environ["DB_PASS"], port=5432, host=os.environ["DB_HOST"])
 from DBS_FIIT_XKALNY.connection import conn
+
+def home(request):
+    return HttpResponse("Test")
 
 def health(request):
     cursor = conn.cursor()
