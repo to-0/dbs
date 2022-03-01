@@ -28,8 +28,8 @@ def health(request):
     print(data[0])
     response = {
         "pgsql": {
-            columns[0]: ' '.join(data[0])
-        },
-        columns[1]: data[1][0]
+            columns[0]: ' '.join(data[0]),
+            columns[1]: data[1][0]
+        }
     }
     return JsonResponse(response)
