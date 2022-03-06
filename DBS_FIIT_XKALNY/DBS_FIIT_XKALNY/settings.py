@@ -26,7 +26,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['fiit-dbs-xkalny-app.azurewebsites.net']
+ALLOWED_HOSTS = ['fiit-dbs-xkalny-app.azurewebsites.net', '127.0.0.1','localhost']
 
 
 # Application definition
