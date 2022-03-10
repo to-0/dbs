@@ -17,8 +17,10 @@ from django.contrib import admin
 from django.urls import path
 
 import v1.views
+import v2.views
 
 urlpatterns = [
     path('v1/health', v1.views.health),
-    path('', v1.views.home)
+    path('', v1.views.home),
+    path('v2/patches/', v2.views.patches)
 ]
