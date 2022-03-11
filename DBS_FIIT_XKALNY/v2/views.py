@@ -58,7 +58,7 @@ def game_exp(request, player_id):
     if request.method != 'GET':
         return HttpResponse("Wrong method")
     cursor = conn.cursor()
-    cursor.execute("SELECT players.id, COALESCE(players.nick,'unknown'), heroes.localized_name, matches.duration,"
+    cursor.execute("SELECT players.id, COALESCE(players.nick,'unknown'), heroes.localized_name, ROUND(matches.duration*1.0/60,20),"
                    "SUM(COALESCE(mpd.xp_hero,0)+COALESCE(mpd.xp_creep,0)+COALESCE(mpd.xp_other,0)+COALESCE(mpd.xp_roshan,0)) "
                    "AS experiences_gained, mpd.level as level_gained, matches.id as match_id, "
                    "CASE matches.radiant_win "
