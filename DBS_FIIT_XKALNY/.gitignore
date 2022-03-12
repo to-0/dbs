@@ -2,3 +2,4 @@
 venv/
 templates/
 .idea/
+.azure/

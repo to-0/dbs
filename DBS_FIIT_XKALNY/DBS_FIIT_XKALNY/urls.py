@@ -25,5 +25,7 @@ urlpatterns = [
     path('v2/patches/', v2.views.patches),
     path('v2/players/<int:player_id>/game_exp/', v2.views.game_exp),
     path('v2/players/<int:player_id>/game_objectives/', v2.views.game_objectives),
+    path('v2/players/<int:player_id>/abilities/', v2.views.game_abilities),
+
 
 ]
