@@ -2,17 +2,20 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from DBS_FIIT_XKALNY.connection import *
 # Create your views here.
+from decimal import Decimal
+import simplejson
 def patches(request):
     if request.method != 'GET':
         return HttpResponse("Wrong method")
     cursor = conn.cursor()
     cursor.execute("SELECT x.name as patch_version, x.patch_start_date, x.patch_end_date, matches.id as match_id"
                    ", ROUND(matches.duration*1.0/60,2) as duration FROM matches "
-                   "JOIN (SELECT patches.name, EXTRACT(epoch from patches.release_date) as patch_start_date"
-                   ",COALESCE(EXTRACT(epoch from (lead(patches.release_date) over (ORDER BY patches.release_date))),"
-                   "EXTRACT(epoch from CURRENT_DATE)) as patch_end_date FROM patches as patches) as x "
+                   "RIGHT JOIN (SELECT patches.name, EXTRACT(epoch from patches.release_date) as patch_start_date"
+                   ",EXTRACT(epoch from (lead(patches.release_date) over (ORDER BY patches.release_date)))"
+                   " as patch_end_date FROM patches as patches) as x "
                    "ON matches.start_time BETWEEN x.patch_start_date and x.patch_end_date"
                    " ORDER BY x.name")
+
     data = cursor.fetchall()
     print(data[0])
     print(len(data))
@@ -31,14 +34,25 @@ def patches(request):
             procc_patches.append(patch_name)
             matches = list()
             # zaznamenam prvy match
-            matches.append({"match_id": row[3], "duration": float(row[4])})
+            #tento if som pridal lebo tam dali aj patche ktore nemaju match :) ked tak ho mzoem dat prec
+            if row[4] is not None and row[3] is not None:
+                duration = Decimal(row[4])
+                # rounded_duration = round(duration)
+                # if duration == rounded_duration:
+                #     duration = rounded_duration
+                matches.append({"match_id": row[3], "duration": duration})
             i += 1
             if i <length:
                 patch_name = data[i][0]
             # prechadzam dalsie riadky pokial nenajdem novy patch
             while patch_name in procc_patches and i < length:
                 next_row = data[i]
-                matches.append({"match_id": next_row[3], "duration": float(next_row[4])})
+                #duration = float(next_row[4])
+                # rounded_duration = round(duration)
+                # if duration == rounded_duration:
+                #     duration = rounded_duration
+                duration = Decimal(next_row[4])
+                matches.append({"match_id": next_row[3], "duration": duration})
                 i += 1
                 if i < length:
                     patch_name = data[i][0]
@@ -50,9 +64,9 @@ def patches(request):
                 "matches": matches
             })
 
-    print(result)
     #return HttpResponse(data)
-    return JsonResponse(result)
+    print(simplejson.dumps(result))
+    return HttpResponse(simplejson.dumps(result))
 
 def game_exp(request, player_id):
     if request.method != 'GET':
