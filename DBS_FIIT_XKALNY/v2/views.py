@@ -57,10 +57,14 @@ def patches(request):
                 if i < length:
                     patch_name = data[i][0]
             # vsetky informacie o patchi a matchov v nom si ulozim a pokracujem dalej
+            patch_start_date = int(row[1])
+            patch_end_date = None
+            if row[2] is not None:
+                patch_end_date = int(row[2])
             result["patches"].append({
                 "patch_version": prev_patch_name,
-                "patch_start_date": row[1],
-                "patch_end_date": row[2],
+                "patch_start_date": int(row[1]),
+                "patch_end_date": patch_end_date,
                 "matches": matches
             })
 
