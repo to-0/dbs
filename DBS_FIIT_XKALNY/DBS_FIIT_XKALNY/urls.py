@@ -18,6 +18,7 @@ from django.urls import path
 
 import v1.views
 import v2.views
+import v3.views
 
 urlpatterns = [
     path('v1/health', v1.views.health),
@@ -26,6 +27,8 @@ urlpatterns = [
     path('v2/players/<int:player_id>/game_exp/', v2.views.game_exp),
     path('v2/players/<int:player_id>/game_objectives/', v2.views.game_objectives),
     path('v2/players/<int:player_id>/abilities/', v2.views.game_abilities),
+    path('v3/matches/<int:match_id>/top_purchases/', v3.views.top_purchases),
+    path('v3/abilities/<int:ability_id>/usage/', v3.views.abilities_usage)
 
 
 ]

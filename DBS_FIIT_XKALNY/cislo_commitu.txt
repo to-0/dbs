@@ -1,2 +1,0 @@
-Server beží na kóde, ktorý je v commite s číslom:
-028b004
