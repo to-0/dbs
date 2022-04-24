@@ -32,12 +32,14 @@ ALLOWED_HOSTS = ['fiit-dbs-xkalny-app.azurewebsites.net', '127.0.0.1','localhost
 # Application definition
 
 INSTALLED_APPS = [
+    'v4.apps.V4Config',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
 ]
 
 MIDDLEWARE = [
@@ -81,6 +83,20 @@ WSGI_APPLICATION = 'DBS_FIIT_XKALNY.wsgi.application'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    },
+    'dota2': {
+       'ENGINE': 'django.db.backends.postgresql_psycopg2',
+       'NAME': 'dota2',
+       'USER': os.environ["DB_USER"],
+       'PASSWORD': os.environ["DB_PASS"],
+       'HOST': os.environ["DB_HOST"],
+       'PORT': '5432'
+    }
+}
 
 
 # Password validation
