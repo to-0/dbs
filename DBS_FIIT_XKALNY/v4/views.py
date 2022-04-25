@@ -3,16 +3,27 @@ from django.shortcuts import render
 # Create your views here.
 from django.http import HttpResponse, JsonResponse
 from v4.models import *
-from django.db.models import Sum, F, Value, Case, When, Q, TextField, FloatField, Count, Max
-from django.db.models.functions import Coalesce, Cast, Round, RowNumber
+from django.db.models import Sum, F, Value, Case, When, Q, TextField, FloatField, Count, Max, Subquery
+from django.db.models.functions import Coalesce, Cast, Round, RowNumber, Extract, Lead
 from django.db.models.expressions import Window
+import time
 
 def index(request):
     return HttpResponse("Test")
-
+#TODO
 def v4_patches(request):
     p = Patches.objects.using('dota2').all().annotate(
+        patch_end_date=Window(
+            expression=Lead('release_date'),
+            order_by=F('release_date').asc()
+        )
     )
+    print(p[0].patch_end_date.timestamp())
+    print(p[0].release_date.timestamp())
+    matches = Matches.objects.using('dota2').annotate(
+    )
+
+    return HttpResponse("OK")
 
 def v4_game_exp(request, player_id):
     test = Matches.objects.using('dota2').filter(id=69)
