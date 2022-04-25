@@ -1,12 +1,4 @@
-# This is an auto-generated Django model module.
-# You'll have to do the following manually to clean this up:
-#   * Rearrange models' order
-#   * Make sure each model has one field with primary_key=True
-#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
-# Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
-
 
 class Abilities(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -20,7 +12,7 @@ class Abilities(models.Model):
 class AbilityUpgrades(models.Model):
     id = models.IntegerField(primary_key=True)
     ability = models.ForeignKey(Abilities, models.DO_NOTHING, blank=True, null=True)
-    match_player_detail = models.ForeignKey('MatchesPlayersDetails', on_delete=models.CASCADE, blank=True, null=True)
+    match_player_detail = models.ForeignKey('MatchesPlayersDetails', on_delete=models.CASCADE, blank=True, null=True, related_name='au')
     level = models.IntegerField(blank=True, null=True)
     time = models.IntegerField(blank=True, null=True)
 
@@ -235,7 +227,7 @@ class Players(models.Model):
 
 class PurchaseLogs(models.Model):
     id = models.IntegerField(primary_key=True)
-    match_player_detail = models.ForeignKey(MatchesPlayersDetails, models.DO_NOTHING, blank=True, null=True)
+    match_player_detail = models.ForeignKey(MatchesPlayersDetails, models.DO_NOTHING, blank=True, null=True, related_name="purchaselogs")
     item = models.ForeignKey(Items, models.DO_NOTHING, blank=True, null=True)
     time = models.IntegerField(blank=True, null=True)
 
