@@ -9,7 +9,7 @@ from django.http import HttpResponse, JsonResponse
 from v4.models import *
 from django.db.models import Sum, F, Value, Case, When, Q, TextField, FloatField, Count, Max, Subquery, OuterRef, \
     IntegerField, CharField
-from django.db.models.functions import Coalesce, Cast, Round, RowNumber, Extract, Lead, Floor
+from django.db.models.functions import Coalesce, Cast, Round, RowNumber, Extract, Lead, Floor, Rank
 from django.db.models.expressions import Window
 import time
 
@@ -255,30 +255,60 @@ def v4_abilities_usage(request, ability_id):
             When(test__gte=100, then=Value('100-109'))
         )
     )
+    test = Abilities.objects.using('dota2').filter(id=ability_id).prefetch_related('au_f_a').annotate(
+        winner=Case(
+            When(Q(au_f_a__match_player_detail_id__match__radiant_win=True) & Q(au_f_a__match_player_detail_id__player_slot__range=[0, 4]), then=Value('winner')),
+            When(Q(au_f_a__match_player_detail_id__match__radiant_win=False) & Q(au_f_a__match_player_detail_id__player_slot__range=[128, 132]), then=Value('winner')),
+            default=Value('loser')
+        ),
+        test=Floor(F('au_f_a__time')*1.0*100/F('au_f_a__match_player_detail_id__match__duration'))).values('id', 'au_f_a__match_player_detail__hero__id', 'au_f_a__match_player_detail__hero__localized_name', 'name', 'winner', 'test').annotate(
+        bucket=Case(
+            When(test__range=[0, 9], then=Value('0-9')),
+            When(test__range=[10, 19], then=Value('10-19')),
+            When(test__range=[20, 29], then=Value('20-29')),
+            When(test__range=[30, 39], then=Value('30-39')),
+            When(test__range=[40, 49], then=Value('40-49')),
+            When(test__range=[50, 59], then=Value('50-59')),
+            When(test__range=[60, 69], then=Value('60-69')),
+            When(test__range=[70, 79], then=Value('70-79')),
+            When(test__range=[80, 89], then=Value('80-89')),
+            When(test__range=[90, 99], then=Value('90-99')),
+            When(test__gte=100, then=Value('100-109'))
+        )
+    ).values('id', 'au_f_a__match_player_detail__hero__id', 'au_f_a__match_player_detail__hero__localized_name', 'name', 'winner', 'bucket').annotate(count=Count(F('bucket'))).annotate(
+        rank=Window(
+        expression=Rank(),
+        partition_by=[F('winner'), F('au_f_a__match_player_detail__hero__localized_name'), F('name')],
+        order_by=Count(F('bucket')).desc()
+    ))
+
+    print("test", test)
     query, params = a.query.sql_with_params()
-    final = Abilities.objects.using('dota2').raw("SELECT id,localized_name, name, winner, bucket, hero_id, count FROM ("
-                    "SELECT *, rank() over (partition by winner,localized_name, name ORDER BY count DESC) FROM ( "
-                    "SELECT id, tbl.winner, tbl.localized_name, tbl.name, tbl.bucket, tbl.hero_id, COUNT(tbl.bucket) as count"
-                            " FROM ({}) as tbl"
-                                        " GROUP BY id, tbl.winner, tbl.localized_name, tbl.name, tbl.bucket, tbl.hero_id "
-                                        "ORDER BY count DESC) as table2) as table3 "
-                                        "WHERE rank=1 ORDER BY hero_id, winner DESC".format(query), [*params])
-    print(list(final))
-    print(final)
+    query2, params2 = test.query.sql_with_params()
+    final2 = Abilities.objects.using('dota2').raw("SELECT id,localized_name, name, winner, bucket, hero_id, count FROM("
+                                                  "{}) as table3 WHERE rank=1 ORDER BY hero_id, winner DESC".format(query2), [*params2])
+    print(list(final2))
+    for a2 in final2:
+        print(a2.localized_name)
+    # final = Abilities.objects.using('dota2').raw("SELECT id,localized_name, name, winner, bucket, hero_id, count FROM ("
+    #                 "SELECT *, rank() over (partition by winner,localized_name, name ORDER BY count DESC) FROM ( "
+    #                 "SELECT id, tbl.winner, tbl.localized_name, tbl.name, tbl.bucket, tbl.hero_id, COUNT(tbl.bucket) as count"
+    #                         " FROM ({}) as tbl"
+    #                                     " GROUP BY id, tbl.winner, tbl.localized_name, tbl.name, tbl.bucket, tbl.hero_id "
+    #                                     "ORDER BY count DESC) as table2) as table3 "
+    #                                     "WHERE rank=1 ORDER BY hero_id, winner DESC".format(query), [*params])
+    # print(list(final))
+    # print(final)
     result = {
         "id": ability_id,
-        "name": final[0].name,
+        "name": final2[0].name,
         "heroes": []
     }
     processed_heroes = []
     i = 0
-    print("Takto sa to sprava")
-    for a in final:
-        print(a.localized_name)
-
-    while i < len(list(final)):
-        print("vonku",final[i].localized_name)
-        row = final[i]
+    while i < len(list(final2)):
+        print("vonku", final2[i].localized_name)
+        row = final2[i]
         if row.hero_id not in processed_heroes:
             processed_heroes.append(row.hero_id)
         else:
@@ -299,9 +329,9 @@ def v4_abilities_usage(request, ability_id):
                 "count": int(row.count)
             }
         j = i + 1
-        while j < len(list(final)) and final[j].hero_id in processed_heroes:
-            print("vnutri", final[j].localized_name)
-            new_row = final[j]
+        while j < len(list(final2)) and final2[j].hero_id in processed_heroes:
+            print("vnutri", final2[j].localized_name)
+            new_row = final2[j]
             if new_row.winner == 'winner':
                 hero["usage_winners"]={
                     "bucket": new_row.bucket,
@@ -325,7 +355,6 @@ def v4_tower_kills(request):
     sql, params = test.query.sql_with_params()
     print(sql, params)
     print('----')
-    message = 'CHAT_MESSAGE_TOWER_KILL'
     mpd = MatchesPlayersDetails.objects.using('dota2').filter(match_player_detail_id_1__subtype='CHAT_MESSAGE_TOWER_KILL').select_related('match', 'hero').prefetch_related(
         'match_player_detail_id_1').annotate(
         a=Window(
