@@ -11,7 +11,7 @@ class Abilities(models.Model):
 
 class AbilityUpgrades(models.Model):
     id = models.IntegerField(primary_key=True)
-    ability = models.ForeignKey(Abilities, models.DO_NOTHING, blank=True, null=True)
+    ability = models.ForeignKey(Abilities, models.DO_NOTHING, blank=True, null=True, related_name='au_f_a')
     match_player_detail = models.ForeignKey('MatchesPlayersDetails', on_delete=models.CASCADE, blank=True, null=True, related_name='au')
     level = models.IntegerField(blank=True, null=True)
     time = models.IntegerField(blank=True, null=True)
@@ -227,7 +227,7 @@ class Players(models.Model):
 
 class PurchaseLogs(models.Model):
     id = models.IntegerField(primary_key=True)
-    match_player_detail = models.ForeignKey(MatchesPlayersDetails, models.DO_NOTHING, blank=True, null=True, related_name="purchaselogs")
+    match_player_detail = models.ForeignKey(MatchesPlayersDetails, models.DO_NOTHING, blank=True, null=True, related_name="purchases")
     item = models.ForeignKey(Items, models.DO_NOTHING, blank=True, null=True)
     time = models.IntegerField(blank=True, null=True)
 
