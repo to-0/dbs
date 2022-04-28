@@ -232,7 +232,7 @@ def v4_top_purchases(request, match_id):
             })
     return JsonResponse(result)
 
-#TODO
+#TODO asi hotovo len vymazat zbytocne veci
 def v4_abilities_usage(request, ability_id):
     a = Abilities.objects.using('dota2').filter(id=ability_id).prefetch_related('au_f_a').annotate(
         winner=Case(
@@ -349,13 +349,9 @@ def v4_abilities_usage(request, ability_id):
 
 
 def v4_tower_kills(request):
-    test = Heroes.objects.using('dota2').filter(localized_name='Sven')
-    print(test)
-    print(test.query)
-    sql, params = test.query.sql_with_params()
-    print(sql, params)
-    print('----')
-    mpd = MatchesPlayersDetails.objects.using('dota2').filter(match_player_detail_id_1__subtype='CHAT_MESSAGE_TOWER_KILL').select_related('match', 'hero').prefetch_related(
+    # uz viac nakombinovat to fakt neslo
+    mpd2 = MatchesPlayersDetails.objects.using('dota2').filter(
+        match_player_detail_id_1__subtype='CHAT_MESSAGE_TOWER_KILL').select_related('match', 'hero').prefetch_related(
         'match_player_detail_id_1').annotate(
         a=Window(
             expression=RowNumber(),
@@ -366,22 +362,21 @@ def v4_tower_kills(request):
             partition_by=['hero__id', 'match__id'],
             order_by=[F('match_player_detail_id_1__time')])
     ).order_by('match__id', 'match_player_detail_id_1__time').values('hero__localized_name', 'hero__id', 'match__id',
-                                                                    'match_player_detail_id_1__time', 'a', 'b')
-    print(mpd.query)
-    query, params = mpd.query.sql_with_params()
-    m2 = MatchesPlayersDetails.objects.using('dota2').raw("SELECT 1 as id, hero_id, localized_name, MAX(count) FROM ("
-                                                        "SELECT localized_name, hero_id, count(localized_name) over (partition by match_id, hero_id, seq) "
-                                                        "FROM ("
-                                                        "SELECT localized_name, hero_id,a,b, (a-b) as seq, match_id "
-                                                        "FROM ({})"
-                                                        " as tbl ) as f ORDER BY count DESC, localized_name "
-                                                          ") as g GROUP BY localized_name, hero_id "
-                                                          "ORDER BY max DESC, localized_name".format(query), [*params])
-    print(m2)
+                                                                     'match_player_detail_id_1__time', 'a', 'b').annotate(
+        seq=F('a')-F('b')
+    ).values('hero__localized_name', 'hero__id', 'match__id', 'seq', 'match_player_detail_id_1__time')
+    query2, params2 = mpd2.query.sql_with_params()
+    m3 = MatchesPlayersDetails.objects.using('dota2').raw("SELECT 1 as id, hero_id, localized_name, MAX(count) as max FROM ("
+                                                          "SELECT localized_name, hero_id, count(tbl.localized_name) over (partition by match_id, hero_id, seq)"
+                                                          " FROM ({}) as tbl"
+                                                          ") as g GROUP BY localized_name, hero_id ORDER BY max DESC, localized_name"
+                                                          .format(query2), [*params2])
+    print(m3)
+    print(list(m3))
     result = {
         "heroes": []
     }
-    for m in m2:
+    for m in m3:
         result["heroes"].append({
             "id": m.hero.id,
             "name": m.hero.localized_name,
